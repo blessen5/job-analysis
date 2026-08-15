@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: job_analytics_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-job_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-job_password}
+      POSTGRES_DB: ${POSTGRES_DB:-job_market_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-job_user} -d ${POSTGRES_DB:-job_market_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: job_analytics_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-job_user}:${POSTGRES_PASSWORD:-job_password}@postgres:5432/${POSTGRES_DB:-job_market_db}
+      - APP_ENV=${APP_ENV:-development}
+      - DEBUG=${DEBUG:-True}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Frontend Service (Placeholder for Phase 11)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: job_analytics_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+
+volumes:
+  postgres_data:
