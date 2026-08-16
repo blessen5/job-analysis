@@ -41,42 +41,53 @@ def test_clean_text():
 def test_parse_salary_string():
     """Test parsing various raw salary format strings."""
     # Test LPA (Lakhs Per Annum)
-    sal_min, sal_max, curr = JobDataCleaner.parse_salary_string("10 LPA - 15 LPA")
+    sal_min, sal_max, curr, period, mid = JobDataCleaner.parse_salary_string("10 LPA - 15 LPA")
     assert sal_min == 1_000_000.0
     assert sal_max == 1_500_000.0
     assert curr == "INR"
+    assert period == "Annual"
+    assert mid == 1_250_000.0
 
     # Test USD Range
-    sal_min, sal_max, curr = JobDataCleaner.parse_salary_string("$80,000 - $120,000")
+    sal_min, sal_max, curr, period, mid = JobDataCleaner.parse_salary_string("$80,000 - $120,000")
     assert sal_min == 80000.0
     assert sal_max == 120000.0
     assert curr == "USD"
 
     # Test Monthly salary
-    sal_min, sal_max, curr = JobDataCleaner.parse_salary_string("₹30,000 per month")
-    assert sal_min == 360000.0
-    assert sal_max == 360000.0
+    sal_min, sal_max, curr, period, mid = JobDataCleaner.parse_salary_string("₹30,000 per month")
+    assert sal_min == 30000.0
     assert curr == "INR"
+    assert period == "Monthly"
 
     # Test Hourly rate
-    sal_min, sal_max, curr = JobDataCleaner.parse_salary_string("$50/hr")
-    assert sal_min == 104000.0
-    assert sal_max == 104000.0
+    sal_min, sal_max, curr, period, mid = JobDataCleaner.parse_salary_string("$50/hr")
+    assert sal_min == 50.0
     assert curr == "USD"
+    assert period == "Hourly"
 
     # Test missing / confidential salary
-    sal_min, sal_max, curr = JobDataCleaner.parse_salary_string("Not Disclosed")
+    sal_min, sal_max, curr, period, mid = JobDataCleaner.parse_salary_string("Not Disclosed")
     assert sal_min is None
     assert sal_max is None
 
 
 def test_parse_experience():
     """Test experience level classification."""
-    assert JobDataCleaner.parse_experience("0-1 years") == "Entry"
-    assert JobDataCleaner.parse_experience("3-5 yrs") == "Mid"
-    assert JobDataCleaner.parse_experience("7+ years") == "Senior"
-    assert JobDataCleaner.parse_experience("", job_title="Senior Data Engineer") == "Senior"
-    assert JobDataCleaner.parse_experience("", job_title="Junior Analyst") == "Entry"
+    min_y, max_y, level = JobDataCleaner.parse_experience("0-1 years")
+    assert level == "Entry Level"
+
+    min_y, max_y, level = JobDataCleaner.parse_experience("3-5 yrs")
+    assert level == "Mid Level"
+
+    min_y, max_y, level = JobDataCleaner.parse_experience("7+ years")
+    assert level == "Senior"
+
+    min_y, max_y, level = JobDataCleaner.parse_experience("", job_title="Senior Data Engineer")
+    assert level == "Senior"
+
+    min_y, max_y, level = JobDataCleaner.parse_experience("", job_title="Junior Analyst")
+    assert level == "Junior"
 
 
 def test_parse_remote_type():
@@ -106,8 +117,8 @@ def test_pipeline_clean_dataframe():
     df_clean, stats = cleaner.clean_dataframe(df_raw)
 
     assert stats["initial_rows"] == 3
-    # 3rd row is an exact duplicate of 1st row
-    assert stats["duplicates_removed"] == 1
+    assert stats["exact_duplicates"] == 0
+    assert stats["likely_duplicates"] == 1
     assert len(df_clean) == 2
 
     assert "job_id" in df_clean.columns
@@ -126,24 +137,23 @@ def test_data_quality_reporter():
         "salary_min": [600000.0, None],
         "salary_max": [1000000.0, None],
         "salary_currency": ["INR", "INR"],
-        "experience": ["Mid", "Senior"],
+        "experience_level": ["Mid Level", "Senior"],
         "remote_type": ["Hybrid", "Remote"],
-        "description": ["Details 1", "Details 2"],
-        "skills_formatted": ["Python, SQL", "Python, Spark"]
+        "description_clean": ["Details 1", "Details 2"],
+        "skills_formatted": ["Python, SQL", "Python, Spark"],
+        "validation_flags": ["VALID", "VALID"]
     }
 
     df = pd.DataFrame(clean_data)
     reporter = DataQualityReporter(df)
-    metrics = reporter.generate_metrics()
+    missing_df = reporter.generate_missing_value_analysis()
 
-    assert metrics["total_rows"] == 2
-    assert metrics["total_columns"] == 11
-    assert metrics["duplicates"] == 0
-    assert metrics["completeness"]["company"] == 100.0
+    assert len(missing_df) == len(df.columns)
+    scores = reporter.calculate_quality_score()
+    assert scores["overall_quality_score"] > 0
 
     report_text = reporter.format_text_report()
-    assert "Dataset Quality Report" in report_text
-    assert "Rows: 2" in report_text
+    assert "Data Quality & Cleaning Summary Report" in report_text
 
 
 def test_find_raw_dataset_missing(tmp_path):

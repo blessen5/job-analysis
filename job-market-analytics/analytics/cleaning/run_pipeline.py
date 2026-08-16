@@ -2,7 +2,7 @@
 CLI Execution Entry Point for Dataset Ingestion and Data Pipeline.
 
 Checks data/raw/ for raw CSV dataset, performs column normalization, cleans records,
-prints data quality reports, and saves output to data/processed/.
+generates transparent data quality scores, exports data/quality/ reports, and saves clean data.
 """
 
 import sys
@@ -11,6 +11,7 @@ import pandas as pd
 
 from analytics.cleaning.pipeline import JobDataCleaner
 from analytics.cleaning.quality_report import DataQualityReporter
+from analytics.cleaning.quality_charts import generate_quality_charts
 
 
 def find_raw_dataset(raw_dir: Path) -> Path:
@@ -25,12 +26,14 @@ def find_raw_dataset(raw_dir: Path) -> Path:
 
 
 def run_pipeline():
-    """Execute dataset ingestion, cleaning, reporting, and saving."""
+    """Execute dataset ingestion, cleaning, reporting, visualization, and saving."""
     project_root = Path(__file__).resolve().parents[2]
     raw_dir = project_root / "data" / "raw"
     processed_dir = project_root / "data" / "processed"
+    quality_dir = project_root / "data" / "quality"
 
     processed_dir.mkdir(parents=True, exist_ok=True)
+    quality_dir.mkdir(parents=True, exist_ok=True)
 
     raw_csv = find_raw_dataset(raw_dir)
 
@@ -63,16 +66,26 @@ def run_pipeline():
     print("\n[+] Cleaning Summary:")
     print(f"    - Initial rows:          {stats['initial_rows']}")
     print(f"    - Dropped missing title: {stats['dropped_missing_title']}")
-    print(f"    - Duplicates removed:    {stats['duplicates_removed']}")
+    print(f"    - Exact duplicates:      {stats['exact_duplicates']}")
+    print(f"    - Likely duplicates:     {stats['likely_duplicates']}")
     print(f"    - Final processed rows:  {stats['processed_rows']}")
 
-    reporter = DataQualityReporter(df_cleaned)
+    reporter = DataQualityReporter(df_cleaned, cleaning_stats=stats)
     report_text = reporter.format_text_report()
     print("\n" + report_text + "\n")
 
+    print("[+] Exporting quality reports to data/quality/...")
+    reporter.export_reports(quality_dir)
+
+    print("[+] Generating data quality visualization charts...")
+    scores = reporter.calculate_quality_score()
+    charts = generate_quality_charts(df_cleaned, scores, quality_dir)
+    for c in charts:
+        print(f"    - Chart generated: {c.name}")
+
     output_path = processed_dir / "clean_job_postings.csv"
     df_cleaned.to_csv(output_path, index=False)
-    print(f"[+] Processed dataset saved to: {output_path}")
+    print(f"[+] Processed dataset saved to: {output_path}\n")
 
     return 0
 

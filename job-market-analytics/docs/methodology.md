@@ -11,31 +11,27 @@ This document details the analytical workflow, research methodology, and process
 ```text
 Raw Job Data
      ↓
-Data Validation
+Column Normalization & Mapping
      ↓
-Data Cleaning
+Data Cleaning & HTML Sanitization
      ↓
-Data Normalization
+Salary & Experience Parsing
+     ↓
+Validation & Logical Rules Check
+     ↓
+Data Quality Scoring & Reports (data/quality/)
      ↓
 Exploratory Data Analysis
      ↓
 Descriptive Statistics
      ↓
-Skill Extraction
+Skill Extraction & Taxonomy Mapping
      ↓
-Skill Demand Analysis
+Skill Co-occurrence & Stack Analysis
      ↓
-Skill Co-occurrence Analysis
+Role, Salary & Geographic Analysis
      ↓
-Job Role Analysis
-     ↓
-Salary Analysis
-     ↓
-Location Analysis
-     ↓
-Visualization
-     ↓
-Insights
+Interactive Dashboard & Insights
 ```
 
 ---
@@ -43,35 +39,36 @@ Insights
 ## Workflow Phase Descriptions
 
 ### 1. Raw Data Ingestion & Validation
-* Load heterogeneous raw job posting data from structured and semi-structured files (CSV, JSON).
-* Validate missing fields, structural schema integrity, and data types.
+* Load heterogeneous raw job posting data from `data/raw/`.
+* Dynamically detect column variations (`jobDescription`, `salaryRange`, `workMode`, `experienceLevel`, `keySkills`) and map to standard schema.
 
-### 2. Data Cleaning & Normalization
-* Standardize job titles, employment types, experience levels, and remote modality tags.
-* Parse raw compensation ranges and convert hourly rates into standard annual currency figures.
-* Clean raw job description text by removing HTML markup, unescaping characters, and stripping noise.
+### 2. Data Cleaning & Quality Analysis (Phase 3 Completed)
+* **Seniority & Title Normalization**: Separate clean job titles from standard seniority levels (`Intern`, `Entry Level`, `Junior`, `Mid Level`, `Senior`, `Lead`, `Manager`, `Director`, `Executive`, `Unknown`).
+* **Experience Parsing**: Extract numeric `experience_min_years`, `experience_max_years`, and standardized `experience_level`.
+* **Salary Parsing**: Extract `salary_min`, `salary_max`, `salary_currency`, `salary_period`, and derived `salary_midpoint` while preserving original compensation strings.
+* **Location & Work Mode**: Extract `city`, `state`, `country` and categorize work modality (`Remote`, `Hybrid`, `Onsite`, `Unknown`).
+* **Text Sanitization**: HTML tag stripping, entity unescaping, and whitespace normalization to produce `description_clean`.
+* **Logical Rule Validation**: Flag records with invalid salary ranges (`salary_min > salary_max`), invalid experience ranges, or invalid date formats.
+* **Transparent Data Quality Scoring**: Compute weighted Data Quality Score (Completeness, Validity, Uniqueness, Consistency) and export quality reports/charts to `data/quality/`.
 
 ### 3. Exploratory Data Analysis (EDA)
-* Compute baseline univariate metrics and continuous distributions.
-* Inspect data completeness and missingness patterns across key dimensions.
-* Tabulate categorical frequencies for hiring companies, roles, and regions.
+* Compute baseline univariate metrics and categorical distributions.
+* Tabulate categorical frequencies for hiring companies, roles, experience levels, and locations.
 
-### 4. Descriptive & Inferential Statistics
+### 4. Statistical Analysis
 * Calculate measures of central tendency (mean, median) and dispersion (IQR, standard deviation).
 * Apply statistical hypothesis testing to evaluate compensation differences across remote modalities and experience thresholds.
 
 ### 5. Skill Extraction & Term Normalization
 * Use Natural Language Processing (spaCy) and pattern matching to extract technical skills, libraries, databases, and frameworks from job descriptions.
-* Map raw extracted entities to a canonical skill taxonomy (e.g., `"PySpark"` -> `"Spark"`).
 
 ### 6. Skill Demand & Co-occurrence Analysis
 * Measure skill prevalence and ranking across job domains.
-* Construct skill co-occurrence matrices and adjacency graphs to identify technology stacks commonly requested together.
+* Construct skill co-occurrence matrices to identify technology stacks commonly requested together.
 
 ### 7. Role, Salary & Geographic Analytics
 * Aggregate compensation patterns across standardized job categories, experience levels, and geographic regions.
-* Evaluate remote vs. onsite job distribution and salary parity.
 
 ### 8. Visualization & Insights Synthesis
-* Generate informative static and interactive visual charts (bar charts, box plots, co-occurrence heatmaps, network graphs).
-* Synthesize empirical findings into actionable market summaries.
+* Generate static and interactive charts (bar charts, box plots, co-occurrence heatmaps, network graphs).
+* Synthesize empirical findings into dataset-derived market insights.
