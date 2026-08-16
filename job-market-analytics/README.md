@@ -49,7 +49,8 @@ Understanding trends in the technical job market requires rigorous data analysis
 ```text
 Phase 1 — Repository Foundation: Complete
 Phase 2 — Dataset & Data Pipeline: Complete
-Phase 3 — Data Cleaning & Quality Analysis: Complete (Current)
+Phase 3 — Data Cleaning & Quality Analysis: Complete
+Phase 4 — Exploratory Data Analysis & Descriptive Statistics: Complete (Current)
 ```
 
 ---
@@ -59,7 +60,7 @@ Phase 3 — Data Cleaning & Quality Analysis: Complete (Current)
 * **Phase 1** — Repository Foundation *(Completed)*
 * **Phase 2** — Dataset & Data Pipeline *(Completed)*
 * **Phase 3** — Data Cleaning & Quality Analysis *(Completed)*
-* **Phase 4** — Exploratory Data Analysis
+* **Phase 4** — Exploratory Data Analysis & Descriptive Statistics *(Completed)*
 * **Phase 5** — Statistical Analysis
 * **Phase 6** — Skill Extraction & Skill Demand
 * **Phase 7** — Skill Co-occurrence Analysis
@@ -99,6 +100,12 @@ uvicorn backend.app.main:app --reload
 ```bash
 # Run raw dataset ingestion, column normalization, data cleaning, and quality report generation
 python -m analytics.cleaning.pipeline
+```
+
+### Exploratory Data Analysis & Statistics Pipeline
+```bash
+# Run EDA, descriptive statistics, outlier analysis, visualization chart generation, and automated report
+python -m analytics.eda.runner
 ```
 
 ### Running Tests
