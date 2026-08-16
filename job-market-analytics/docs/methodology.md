@@ -51,13 +51,11 @@ Interactive Dashboard & Insights
 * **Logical Rule Validation**: Flag records with invalid salary ranges (`salary_min > salary_max`), invalid experience ranges, or invalid date formats.
 * **Transparent Data Quality Scoring**: Compute weighted Data Quality Score (Completeness, Validity, Uniqueness, Consistency) and export quality reports/charts to `data/quality/`.
 
-### 3. Exploratory Data Analysis (EDA)
-* Compute baseline univariate metrics and categorical distributions.
-* Tabulate categorical frequencies for hiring companies, roles, experience levels, and locations.
-
-### 4. Statistical Analysis
-* Calculate measures of central tendency (mean, median) and dispersion (IQR, standard deviation).
-* Apply statistical hypothesis testing to evaluate compensation differences across remote modalities and experience thresholds.
+### 3. Exploratory Data Analysis & Descriptive Statistics (Phase 4 Completed)
+* **Macro Overview**: Dynamic calculation of posting counts, company concentration, location coverage, date ranges, and remote work percentages.
+* **Parametric & Non-Parametric Metrics**: Compute mean, std, variance alongside robust median, Q1, Q3, and IQR metrics.
+* **Outlier Detection**: Apply Interquartile Range (IQR) and Z-Score outlier algorithms without destructive record removal.
+* **Visual Analytics & Reporting**: Generate publication-ready PNG charts and automated Markdown reports with structured rule-based insights (`Observation`, `Supporting Evidence`, `Interpretation`, `Limitation`).
 
 ### 5. Skill Extraction & Term Normalization
 * Use Natural Language Processing (spaCy) and pattern matching to extract technical skills, libraries, databases, and frameworks from job descriptions.
